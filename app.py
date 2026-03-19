@@ -59,8 +59,6 @@ def load_fasta_file(filepath, label):
         pass
     return sequences
 
-# 🔥 FIX: Non-overlapping chunks (reduces data leakage)
-
 def load_real_dataset():
     dataset_path = "dataset"
     data = []
@@ -82,7 +80,6 @@ def load_real_dataset():
 
             chunk_size = 100
 
-            # 🔥 NON-overlapping chunks (IMPORTANT FIX)
             for i in range(0, len(seq) - chunk_size, chunk_size):
                 chunk = seq[i:i+chunk_size]
                 data.append([chunk, lbl])
@@ -177,7 +174,7 @@ model = RandomForestClassifier(
     n_estimators=150,
     random_state=42,
     class_weight='balanced',
-    max_depth=10   # 🔥 prevents overfitting
+    max_depth=10
 )
 
 model.fit(X_train, y_train)
@@ -200,6 +197,8 @@ st.subheader("🔬 Test Your DNA Sequence")
 uploaded_file = st.file_uploader("Upload DNA File (.fasta or .txt)", type=["fasta", "txt"])
 user_input = st.text_input("Or enter DNA Sequence")
 
+probs = None  # NEW
+
 if st.button("Predict"):
 
     if uploaded_file:
@@ -216,17 +215,103 @@ if st.button("Predict"):
             vector = vectorizer.transform([kmers])
             prediction = model.predict(vector)
 
+            # NEW: species probabilities
+            if mode == "Species Classification (Real Data)":
+                probs = model.predict_proba(vector)[0]
+
             st.success(f"🧬 Predicted: **{prediction[0]}**")
             st.info(f"GC Content: {round(gc_content(user_input)*100,2)}%")
 
-# ------------------ CLASS DISTRIBUTION ------------------
+# ------------------ INPUT COMPOSITION GRAPH ------------------
 
-st.subheader("📈 Class Distribution")
+st.subheader("📊 DNA Composition (Your Input)")
 
-fig1, ax1 = plt.subplots()
-sns.countplot(x=df['label'], ax=ax1)
-plt.xticks(rotation=30)
-st.pyplot(fig1)
+if user_input:
+    fig1, ax1 = plt.subplots()
+
+    if mode == "G vs C Classification":
+        g_count = user_input.upper().count('G')
+        c_count = user_input.upper().count('C')
+
+        ax1.bar(["G", "C"], [g_count, c_count],
+                color=["green", "blue"])
+        ax1.set_title("G vs C Composition")
+
+    else:
+        bases = ['A', 'T', 'G', 'C']
+        values = [user_input.upper().count(b) for b in bases]
+        colors = ['orange', 'red', 'green', 'blue']
+
+        ax1.bar(bases, values, color=colors)
+        ax1.set_title("A, T, G, C Composition")
+
+    ax1.set_ylabel("Count")
+    st.pyplot(fig1)
+
+# ================= PROMOTER BAR GRAPH (REAL FIX) =================
+
+if user_input and mode == "Promoter vs Non-Promoter":
+
+    seq = user_input.upper()
+
+    # 🔥 motif scoring (more realistic)
+    motifs = {
+        "TATA": 3,
+        "CAAT": 2,
+        "TTGACA": 3
+    }
+
+    score = 0
+    max_score = sum(motifs.values())
+
+    for motif, weight in motifs.items():
+        if motif in seq:
+            score += weight
+
+    # normalize into percentage
+    promoter_pct = (score / max_score) * 100 if max_score > 0 else 0
+    non_promoter_pct = 100 - promoter_pct
+
+    st.subheader("🧬 Promoter vs Non-Promoter (Input Based)")
+
+    # TEXT OUTPUT
+    st.write(f"🟢 Promoter Likelihood: **{round(promoter_pct,2)}%**")
+    st.write(f"🔴 Non-Promoter Likelihood: **{round(non_promoter_pct,2)}%**")
+
+    # BAR GRAPH
+    fig_bar, ax_bar = plt.subplots()
+
+    categories = ["Promoter", "Non-Promoter"]
+    values = [promoter_pct, non_promoter_pct]
+    colors = ["green", "red"]
+
+    ax_bar.bar(categories, values, color=colors)
+    ax_bar.set_ylim(0, 100)
+    ax_bar.set_ylabel("Percentage (%)")
+    ax_bar.set_title("Promoter Likelihood of Input Sequence")
+
+    for i, v in enumerate(values):
+        ax_bar.text(i, v + 1, f"{v:.1f}%", ha='center')
+
+    st.pyplot(fig_bar)
+
+# ================= SPECIES GRAPH (ADDED ONLY) =================
+
+if user_input and mode == "Species Classification (Real Data)" and probs is not None:
+
+    st.subheader("🧬 Species Similarity")
+
+    labels = model.classes_
+    probs = probs / sum(probs)
+
+    fig_bar, ax_bar = plt.subplots()
+    ax_bar.bar(labels, probs, color=["green", "blue", "purple", "orange"])
+    ax_bar.set_ylim(0, 1)
+
+    for i, v in enumerate(probs):
+        ax_bar.text(i, v + 0.01, f"{v:.2f}", ha='center')
+
+    st.pyplot(fig_bar)
 
 # ------------------ GC CONTENT ------------------
 
