@@ -12,20 +12,38 @@ from sklearn.model_selection import train_test_split
 # ------------------ PAGE TITLE ------------------
 
 st.title("🧬 DNA Sequence Classification System")
-st.markdown("### AI-based Bioinformatics Model for DNA Analysis")
+st.markdown("### Bioinformatics Model for DNA Analysis")
 
-st.write("""
-This system classifies DNA sequences based on nucleotide composition.
+# ------------------ MODE SELECTION ------------------
 
-- 🟢 **G-Rich Sequence** → Higher Guanine content  
-- 🔵 **C-Rich Sequence** → Higher Cytosine content  
-""")
+mode = st.selectbox(
+    "Select Classification Mode",
+    ["G vs C Classification", "Promoter vs Non-Promoter"]
+)
+
+# ------------------ DESCRIPTION ------------------
+
+if mode == "G vs C Classification":
+    st.write("""
+    This system classifies DNA sequences based on nucleotide composition.
+
+    - 🟢 **G-Rich Sequence** → Higher Guanine content  
+    - 🔵 **C-Rich Sequence** → Higher Cytosine content  
+    """)
+
+else:
+    st.write("""
+    This system classifies DNA sequences based on regulatory patterns.
+
+    - 🟢 **Promoter** → Contains motifs like TATA box (gene regulation regions)  
+    - 🔵 **Non-Promoter** → Does not contain promoter-like patterns  
+    """)
 
 # ------------------ DATASET GENERATION ------------------
 
 def generate_sequence(length=20):
     bases = ['A', 'T', 'G', 'C']
-    weights = [0.2, 0.2, 0.3, 0.3]  # more realistic bias
+    weights = [0.2, 0.2, 0.3, 0.3]
     return ''.join(random.choices(bases, weights=weights, k=length))
 
 data = []
@@ -33,10 +51,18 @@ data = []
 for _ in range(300):
     seq = generate_sequence()
 
-    if seq.count('G') > seq.count('C'):
-        label = "G-Rich Sequence"
+    if mode == "G vs C Classification":
+        if seq.count('G') > seq.count('C'):
+            label = "G-Rich Sequence"
+        else:
+            label = "C-Rich Sequence"
+
     else:
-        label = "C-Rich Sequence"
+        # Simulated promoter logic
+        if "TATA" in seq:
+            label = "Promoter"
+        else:
+            label = "Non-Promoter"
 
     data.append([seq, label])
 
@@ -100,26 +126,46 @@ if st.button("Predict"):
 
             st.success(f"🧬 Predicted Class: **{prediction[0]}**")
 
-            # GC content of user input
             gc_val = gc_content(user_input)
             st.info(f"GC Content: {round(gc_val * 100, 2)}%")
 
-            if prediction[0] == "G-Rich Sequence":
-                st.info("Higher Guanine content → often linked to structural stability and regulatory regions.")
+            # ------------------ EXPLANATION ------------------
+
+            if mode == "G vs C Classification":
+                if prediction[0] == "G-Rich Sequence":
+                    st.info("Higher Guanine content → linked to structural stability and regulatory regions.")
+                else:
+                    st.info("Higher Cytosine content → may indicate different genomic properties.")
+
             else:
-                st.info("Higher Cytosine content → may indicate different functional genomic regions.")
+                if prediction[0] == "Promoter":
+                    st.info("Likely promoter region → may initiate gene transcription (TATA-like motifs detected).")
+                else:
+                    st.info("Likely non-promoter region → no strong regulatory motifs found.")
 
     else:
         st.warning("Please enter a DNA sequence.")
 
-# ------------------ GRAPH: CLASS DISTRIBUTION ------------------
+# ------------------ CLASS DISTRIBUTION ------------------
 
 st.subheader("📈 Class Distribution")
 
+label_counts = df['label'].value_counts()
+
 fig1, ax1 = plt.subplots()
-df['label'].value_counts().plot(kind='bar', ax=ax1, color=['#4CAF50', '#2196F3'])
+
+colors = []
+for label in label_counts.index:
+    if label in ["G-Rich Sequence", "Promoter"]:
+        colors.append("#4CAF50")  # green
+    else:
+        colors.append("#2196F3")  # blue
+
+label_counts.plot(kind='bar', ax=ax1, color=colors)
+
 ax1.set_ylabel("Count")
 ax1.set_title("Distribution of DNA Classes")
+
 st.pyplot(fig1)
 
 # ------------------ GC CONTENT GRAPH ------------------
@@ -129,6 +175,7 @@ st.subheader("🧬 GC Content Distribution")
 fig_gc, ax_gc = plt.subplots()
 sns.histplot(df["gc_content"], bins=10, kde=True, ax=ax_gc)
 ax_gc.set_title("GC Content Distribution")
+
 st.pyplot(fig_gc)
 
 # ------------------ CONFUSION MATRIX ------------------
@@ -136,11 +183,13 @@ st.pyplot(fig_gc)
 st.subheader("📊 Confusion Matrix")
 
 cm = confusion_matrix(y_test, y_pred)
+labels = sorted(y.unique())
 
 fig2, ax2 = plt.subplots()
+
 sns.heatmap(cm, annot=True, fmt='d', cmap="Blues",
-            xticklabels=["C-Rich", "G-Rich"],
-            yticklabels=["C-Rich", "G-Rich"],
+            xticklabels=labels,
+            yticklabels=labels,
             ax=ax2)
 
 ax2.set_xlabel("Predicted")
