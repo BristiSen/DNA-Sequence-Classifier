@@ -23,6 +23,8 @@ with st.sidebar:
 st.title("🧬 DNA Sequence Classification System")
 st.markdown("### Bioinformatics Model for DNA Analysis")
 
+st.divider()
+
 # ------------------ MODE ------------------
 
 mode = st.selectbox(
@@ -33,11 +35,11 @@ mode = st.selectbox(
 # ------------------ DESCRIPTION ------------------
 
 if mode == "G vs C Classification":
-    st.write("Classifies DNA based on strong G vs C dominance.")
+    st.info("Classifies DNA based on strong G vs C dominance.")
 elif mode == "Promoter vs Non-Promoter":
-    st.write("Detects promoter regions using sequence motifs.")
+    st.info("Detects promoter regions using sequence motifs.")
 else:
-    st.write("Uses real FASTA genomic data to classify species.")
+    st.info("Uses real FASTA genomic data to classify species.")
 
 # ------------------ FUNCTIONS ------------------
 
@@ -148,12 +150,12 @@ vectorizer = CountVectorizer()
 X = vectorizer.fit_transform(df["kmers"])
 y = df["label"]
 
-# ✅🔥 FIX STARTS HERE
+# ------------------ FIX ------------------
 
 num_classes = len(y.unique())
 
 if len(df) < num_classes * 2:
-    st.error("Dataset too small for all classes. Please add more data.")
+    st.error("Dataset too small for all classes.")
     st.stop()
 
 test_size = max(0.25, num_classes / len(df) + 0.05)
@@ -165,8 +167,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y,
     random_state=42
 )
-
-# ✅🔥 FIX ENDS HERE
 
 # ------------------ MODEL ------------------
 
@@ -185,7 +185,9 @@ y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
 
 st.subheader("📊 Model Performance")
-st.write(f"Accuracy: **{round(accuracy * 100, 2)}%**")
+st.metric("Accuracy", f"{accuracy*100:.2f}%")
+
+st.divider()
 
 # ------------------ INPUT ------------------
 
@@ -196,6 +198,10 @@ user_input = st.text_input("Enter DNA Sequence")
 
 prediction = None
 probs = None
+confidence = None
+
+if user_input:
+    st.code(user_input[:100] + "...")
 
 if st.button("Predict"):
 
@@ -203,25 +209,24 @@ if st.button("Predict"):
         lines = uploaded_file.read().decode("utf-8").split("\n")
         user_input = ''.join([l.strip() for l in lines if not l.startswith(">")])
 
-    if user_input:
-        user_input = user_input.upper()
+    if user_input and all(c in "ATGC" for c in user_input):
 
-        if not all(c in "ATGC" for c in user_input):
-            st.error("Invalid DNA sequence.")
-        else:
-            kmers = ' '.join(get_kmers(user_input, k_value))
-            vector = vectorizer.transform([kmers])
+        kmers = ' '.join(get_kmers(user_input, k_value))
+        vector = vectorizer.transform([kmers])
 
-            prediction = model.predict(vector)[0]
+        prediction = model.predict(vector)[0]
+        prob_vals = model.predict_proba(vector)[0]
+        confidence = max(prob_vals)
 
-            if mode == "Species Classification (Real Data)":
-                probs = model.predict_proba(vector)[0]
+        if mode == "Species Classification (Real Data)":
+            probs = prob_vals
 
-            gc_val = round(gc_content(user_input)*100,2)
+        gc_val = gc_content(user_input)*100
 
-            col1, col2 = st.columns(2)
-            col1.metric("Prediction", prediction)
-            col2.metric("GC Content", f"{gc_val}%")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Prediction", prediction)
+        col2.metric("GC Content", f"{gc_val:.2f}%")
+        col3.metric("Confidence", f"{confidence*100:.2f}%")
 
 # ------------------ ANALYSIS ------------------
 
@@ -229,15 +234,13 @@ if prediction:
     st.subheader("🧠 Analysis")
 
     if mode == "G vs C Classification":
-        st.write("Classification is based on dominance of G vs C using k-mer patterns.")
-
+        st.write("Classification based on G vs C dominance using k-mers.")
     elif mode == "Promoter vs Non-Promoter":
-        st.write("Based on biological motifs (TATA, CAAT, TTGACA) and learned patterns.")
-
+        st.write("Based on promoter motifs like TATA, CAAT, TTGACA.")
     else:
-        st.write("Based on similarity of k-mer distribution with known species genomes.")
+        st.write("Based on similarity to species genomic patterns.")
 
-# ------------------ GRAPHS (UNCHANGED) ------------------
+# ------------------ ALL ORIGINAL GRAPHS ------------------
 
 st.subheader("📊 DNA Composition (Your Input)")
 
@@ -256,6 +259,8 @@ if user_input:
 
     st.pyplot(fig1)
 
+# PROMOTER GRAPH
+
 if user_input and mode == "Promoter vs Non-Promoter":
 
     motifs = {"TATA":3,"CAAT":2,"TTGACA":3}
@@ -271,11 +276,16 @@ if user_input and mode == "Promoter vs Non-Promoter":
                color=["green","red"])
     st.pyplot(fig_bar)
 
+# SPECIES GRAPH
+
 if user_input and mode == "Species Classification (Real Data)" and probs is not None:
 
     fig_bar, ax_bar = plt.subplots()
-    ax_bar.bar(model.classes_, probs, color=["green","blue","purple","orange"])
+    ax_bar.bar(model.classes_, probs,
+               color=["green","blue","purple","orange"])
     st.pyplot(fig_bar)
+
+# GC DISTRIBUTION
 
 st.subheader("🧬 GC Content Distribution")
 
@@ -283,11 +293,29 @@ fig_gc, ax_gc = plt.subplots()
 sns.histplot(df["gc_content"], bins=10, kde=True, ax=ax_gc)
 st.pyplot(fig_gc)
 
+# CONFUSION MATRIX
+
 st.subheader("📊 Confusion Matrix")
 
 fig2, ax2 = plt.subplots()
 sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, cmap="Blues")
 st.pyplot(fig2)
 
-st.markdown("---")
-st.markdown("👩‍💻 Developed using Machine Learning, Bioinformatics & Streamlit")
+st.divider()
+
+# ------------------ DOWNLOAD ------------------
+
+if prediction:
+    df_download = pd.DataFrame({
+        "Sequence": [user_input],
+        "Prediction": [prediction],
+        "GC_Content": [gc_val]
+    })
+
+    st.download_button("📥 Download Results",
+                       df_download.to_csv(index=False),
+                       "dna_result.csv")
+
+# ------------------ FOOTER ------------------
+
+st.markdown("👩‍💻 Developed by **Bristi Sen**, **Sambriddhi Debnath**, **Rajjyashree Raychaudhuri**")
