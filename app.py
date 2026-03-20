@@ -18,6 +18,12 @@ with st.sidebar:
     seq_length = st.slider("Synthetic Sequence Length", 40, 120, 60)
     dataset_size = st.slider("Synthetic Dataset Size", 200, 1000, 600)
 
+    st.divider()
+    threshold = st.slider("G-C Sensitivity Threshold", 0.05, 0.3, 0.15)
+
+    st.markdown("---")
+    st.caption("✨ Tune parameters like a real bioinformatics researcher")
+
 # ------------------ PAGE TITLE ------------------
 
 st.title("🧬 DNA Sequence Classification System")
@@ -35,11 +41,11 @@ mode = st.selectbox(
 # ------------------ DESCRIPTION ------------------
 
 if mode == "G vs C Classification":
-    st.info("Classifies DNA based on strong G vs C dominance.")
+    st.info("⚡ Detects dominance between Guanine (G) and Cytosine (C)")
 elif mode == "Promoter vs Non-Promoter":
-    st.info("Detects promoter regions using sequence motifs.")
+    st.info("🧬 Identifies biological promoter motifs like TATA box")
 else:
-    st.info("Uses real FASTA genomic data to classify species.")
+    st.info("🌍 Uses real FASTA genomic data to match sequence patterns to known species genomes")
 
 # ------------------ FUNCTIONS ------------------
 
@@ -51,6 +57,10 @@ def gc_content(seq):
 
 def get_kmers(sequence, k=3):
     return [sequence[i:i+k] for i in range(len(sequence) - k + 1)]
+
+def mutate(seq, rate=0.1):
+    bases = ['A','T','G','C']
+    return ''.join([random.choice(bases) if random.random()<rate else c for c in seq])
 
 # ------------------ FASTA LOADER ------------------
 
@@ -90,10 +100,8 @@ def load_real_dataset():
         for seq, lbl in sequences:
             if len(seq) < 200:
                 continue
-
             for i in range(0, len(seq) - 100, 100):
-                chunk = seq[i:i+100]
-                data.append([chunk, lbl])
+                data.append([seq[i:i+100], lbl])
 
     return pd.DataFrame(data, columns=["sequence", "label"])
 
@@ -108,9 +116,9 @@ else:
 
         if mode == "G vs C Classification":
             diff = (seq.count('G') - seq.count('C')) / len(seq)
-            if diff > 0.15:
+            if diff > threshold:
                 label = "G-Rich Sequence"
-            elif diff < -0.15:
+            elif diff < -threshold:
                 label = "C-Rich Sequence"
             else:
                 continue
@@ -150,13 +158,7 @@ vectorizer = CountVectorizer()
 X = vectorizer.fit_transform(df["kmers"])
 y = df["label"]
 
-# ------------------ FIX ------------------
-
 num_classes = len(y.unique())
-
-if len(df) < num_classes * 2:
-    st.error("Dataset too small for all classes.")
-    st.stop()
 
 test_size = max(0.25, num_classes / len(df) + 0.05)
 test_size = min(test_size, 0.4)
@@ -187,6 +189,12 @@ accuracy = accuracy_score(y_test, y_pred)
 st.subheader("📊 Model Performance")
 st.metric("Accuracy", f"{accuracy*100:.2f}%")
 
+# 🔥 NEW: CLASS DISTRIBUTION
+st.subheader("📊 Training Data Distribution")
+fig_dist, ax_dist = plt.subplots()
+sns.countplot(x=df['label'], ax=ax_dist)
+st.pyplot(fig_dist)
+
 st.divider()
 
 # ------------------ INPUT ------------------
@@ -195,6 +203,8 @@ st.subheader("🔬 Test Your DNA Sequence")
 
 uploaded_file = st.file_uploader("Upload DNA File", type=["fasta", "txt"])
 user_input = st.text_input("Enter DNA Sequence")
+
+multi_input = st.text_area("Batch Input (optional, one per line)")
 
 prediction = None
 probs = None
@@ -228,19 +238,28 @@ if st.button("Predict"):
         col2.metric("GC Content", f"{gc_val:.2f}%")
         col3.metric("Confidence", f"{confidence*100:.2f}%")
 
-# ------------------ ANALYSIS ------------------
+# ------------------ EXPLAINABILITY ------------------
 
 if prediction:
-    st.subheader("🧠 Analysis")
+    st.subheader("🔍 Why this prediction?")
 
-    if mode == "G vs C Classification":
-        st.write("Classification based on G vs C dominance using k-mers.")
-    elif mode == "Promoter vs Non-Promoter":
-        st.write("Based on promoter motifs like TATA, CAAT, TTGACA.")
-    else:
-        st.write("Based on similarity to species genomic patterns.")
+    feature_names = vectorizer.get_feature_names_out()
+    importances = model.feature_importances_
 
-# ------------------ ALL ORIGINAL GRAPHS ------------------
+    top_features = sorted(zip(feature_names, importances),
+                          key=lambda x: x[1], reverse=True)[:5]
+
+    for f, val in top_features:
+        st.write(f"• {f} → {round(val,4)}")
+
+# ------------------ MUTATION ------------------
+
+if user_input:
+    if st.button("🧪 Mutate Sequence"):
+        mutated = mutate(user_input)
+        st.write("Mutated:", mutated)
+
+# ------------------ ORIGINAL GRAPHS (ALL KEPT) ------------------
 
 st.subheader("📊 DNA Composition (Your Input)")
 
@@ -259,49 +278,46 @@ if user_input:
 
     st.pyplot(fig1)
 
-# PROMOTER GRAPH
-
 if user_input and mode == "Promoter vs Non-Promoter":
-
     motifs = {"TATA":3,"CAAT":2,"TTGACA":3}
     score = sum(weight for motif, weight in motifs.items() if motif in user_input)
     max_score = sum(motifs.values())
 
-    promoter_pct = (score/max_score)*100 if max_score else 0
-    non_promoter_pct = 100 - promoter_pct
-
     fig_bar, ax_bar = plt.subplots()
     ax_bar.bar(["Promoter","Non-Promoter"],
-               [promoter_pct, non_promoter_pct],
+               [(score/max_score)*100, 100-(score/max_score)*100],
                color=["green","red"])
     st.pyplot(fig_bar)
 
-# SPECIES GRAPH
-
 if user_input and mode == "Species Classification (Real Data)" and probs is not None:
-
     fig_bar, ax_bar = plt.subplots()
     ax_bar.bar(model.classes_, probs,
                color=["green","blue","purple","orange"])
     st.pyplot(fig_bar)
 
-# GC DISTRIBUTION
-
 st.subheader("🧬 GC Content Distribution")
-
 fig_gc, ax_gc = plt.subplots()
 sns.histplot(df["gc_content"], bins=10, kde=True, ax=ax_gc)
 st.pyplot(fig_gc)
 
-# CONFUSION MATRIX
-
 st.subheader("📊 Confusion Matrix")
 
-fig2, ax2 = plt.subplots()
-sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, cmap="Blues")
-st.pyplot(fig2)
+labels = sorted(y.unique())
+cm = confusion_matrix(y_test, y_pred, labels=labels)
 
-st.divider()
+fig2, ax2 = plt.subplots()
+
+sns.heatmap(cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=labels,
+            yticklabels=labels)
+
+ax2.set_xlabel("Predicted")
+ax2.set_ylabel("Actual")
+
+st.pyplot(fig2)
 
 # ------------------ DOWNLOAD ------------------
 
@@ -317,5 +333,14 @@ if prediction:
                        "dna_result.csv")
 
 # ------------------ FOOTER ------------------
+st.markdown("---")
 
 st.markdown("👩‍💻 Developed by **Bristi Sen**, **Sambriddhi Debnath**, **Rajjyashree Raychaudhuri**")
+
+st.markdown(
+"""
+💅 *Stalk responsibly:*  
+🔗 [LinkedIn](https://www.linkedin.com/in/bristi-sen-709548311/)  
+💻 [GitHub](https://github.com/BristiSen)  
+"""
+)
