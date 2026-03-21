@@ -10,6 +10,11 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 
+# ================== 🔥 AESTHETIC ENHANCEMENTS ==================
+st.markdown("## ✨ Welcome to your DNA Intelligence Lab")
+st.caption("Analyze. Predict. Understand. — Like a bioinformatics pro.")
+
+st.divider()
 # ------------------ SIDEBAR ------------------
 
 with st.sidebar:
@@ -189,6 +194,14 @@ accuracy = accuracy_score(y_test, y_pred)
 st.subheader("📊 Model Performance")
 st.metric("Accuracy", f"{accuracy*100:.2f}%")
 
+# 🔥 Add interpretation
+if accuracy > 0.9:
+    st.success("Model is performing extremely well 🎯")
+elif accuracy > 0.75:
+    st.info("Model performance is decent 👍")
+else:
+    st.warning("Model may need improvement ⚠️")
+
 # 🔥 NEW: CLASS DISTRIBUTION
 st.subheader("📊 Training Data Distribution")
 fig_dist, ax_dist = plt.subplots()
@@ -212,6 +225,7 @@ confidence = None
 
 if user_input:
     st.code(user_input[:100] + "...")
+    st.write(f"📏 Sequence Length: **{len(user_input)} bases**")
 
 if st.button("Predict"):
 
@@ -238,6 +252,51 @@ if st.button("Predict"):
         col2.metric("GC Content", f"{gc_val:.2f}%")
         col3.metric("Confidence", f"{confidence*100:.2f}%")
 
+        # 🔥 Confidence interpretation
+        if confidence > 0.8:
+            st.success("High confidence prediction ✅")
+        elif confidence > 0.6:
+            st.info("Moderate confidence 🤔")
+        else:
+            st.warning("Low confidence — interpret carefully ⚠️")
+
+
+# ================== ANALYSIS ==================
+if prediction:
+    st.subheader("🧠 Deep Analysis")
+
+    if mode == "G vs C Classification":
+        st.write("""
+This classification is based on **relative dominance of G vs C nucleotides**.
+
+- Positive bias → G-rich  
+- Negative bias → C-rich  
+- Learned via k-mer frequency patterns
+        """)
+
+    elif mode == "Promoter vs Non-Promoter":
+        st.write("""
+Prediction uses **biological promoter motifs**:
+
+- TATA box  
+- CAAT box  
+- TTGACA sequence  
+
+Combined with machine learning pattern recognition.
+        """)
+
+    else:
+        st.write("""
+The model compares your sequence with **real genomic data** from:
+
+- Human  
+- Chimpanzee  
+- Mouse  
+- Macaque  
+
+Using k-mer similarity patterns.
+        """)
+
 # ------------------ EXPLAINABILITY ------------------
 
 if prediction:
@@ -258,6 +317,35 @@ if user_input:
     if st.button("🧪 Mutate Sequence"):
         mutated = mutate(user_input)
         st.write("Mutated:", mutated)
+
+# ================== BATCH ==================
+if multi_input:
+    st.subheader("📦 Batch Predictions")
+
+    results = []
+    for seq in multi_input.split("\n"):
+        seq = seq.strip().upper()
+        if seq and all(c in "ATGC" for c in seq):
+            kmers = ' '.join(get_kmers(seq, k_value))
+            vector = vectorizer.transform([kmers])
+            pred = model.predict(vector)[0]
+            results.append({"Sequence": seq[:20]+"...", "Prediction": pred})
+
+    if results:
+        st.dataframe(pd.DataFrame(results))
+
+# ================== BIO INSIGHT ==================
+if user_input:
+    st.subheader("🧠 Biological Insight")
+
+    gc_val = gc_content(user_input)*100
+
+    if gc_val > 60:
+        st.write("High GC → More stable DNA structure 🧬")
+    elif gc_val < 40:
+        st.write("Low GC → More flexible DNA")
+    else:
+        st.write("Moderate GC → Balanced structure")
 
 # ------------------ ORIGINAL GRAPHS (ALL KEPT) ------------------
 
