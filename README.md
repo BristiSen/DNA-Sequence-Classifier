@@ -1,177 +1,143 @@
 # 🧬 DNA Sequence Classification System
 
-A bioinformatics web application that analyzes and classifies DNA sequences using Machine Learning, while also providing real-time biological insights from user input.
+### 🚀 Bioinformatics meets Machine Learning
+
+An interactive web application that classifies DNA sequences using machine learning techniques, combining biological insights with computational intelligence.
 
 ---
 
-## 🚀 Project Overview
+## ✨ Overview
 
-This project enables classification and analysis of DNA sequences across multiple biological perspectives:
+This project is a **DNA sequence analysis platform** built using **Streamlit and Scikit-learn**, designed to:
 
-### 🧬 Modes of Classification
+* Classify DNA sequences based on:
 
-* 🟢 **G vs C Classification**
-
-  * Classifies sequences based on Guanine (G) and Cytosine (C) dominance
-
-* 🔴 **Promoter vs Non-Promoter Detection**
-
-  * Uses biologically relevant motifs (TATA, CAAT, TTGACA)
-  * Provides **promoter likelihood (%)** of the input sequence
-
-* 🌍 **Species Classification (Real Data)**
-
-  * Classifies sequences into:
-
-    * Human
-    * Chimpanzee
-    * Mouse
-    * Macaque
-  * Displays **species similarity percentages**
+  * 🧪 **G vs C content dominance**
+  * 🧬 **Promoter vs Non-promoter regions**
+  * 🌍 **Species classification using real genomic data**
+* Provide **interpretability and biological insights**
+* Enable **interactive experimentation** with sequence data
 
 ---
 
-## 🧠 Key Features
+## 🎯 Key Features
 
-* 🧬 Multi-mode DNA classification system
+### 🔬 Machine Learning Capabilities
 
-* 🔍 K-mer based feature extraction (k = 3)
+* K-mer based feature extraction
+* Random Forest Classification
+* Stratified train-test splitting
+* Class balancing for fair learning
 
-* 🤖 Machine Learning using Random Forest Classifier
+### 📊 Model Evaluation
 
-* 📊 Real-time input-based analysis and visualization
+* Accuracy metrics
+* Confusion Matrix (with labels)
+* Classification Report (precision, recall, F1-score)
+* Cross-validation with dynamic fold selection
+* ROC Curve (where applicable)
 
-* 📈 Interactive graphs:
+### 🧠 Interpretability
 
-  * DNA base composition (A, T, G, C)
-  * G vs C comparison (color-coded)
-  * Promoter likelihood distribution
-  * Species similarity visualization
-  * GC-content distribution
-  * Confusion matrix
+* Top feature importance (k-mers driving predictions)
+* Confidence score for predictions
+* Error analysis (misclassified samples)
 
-* ⚡ Instant prediction from user input
+### 🧬 Biological Insights
 
-* 📁 Supports manual input and FASTA file upload
+* GC content analysis
+* Promoter motif detection (TATA, CAAT, TTGACA)
+* DNA stability interpretation
 
----
+### ⚡ Interactive UI
 
-## 🏗️ Tech Stack
+* Upload FASTA or text sequences
+* Batch prediction support
+* Sequence mutation simulation
+* Adjustable parameters:
 
-* **Language:** Python
-
-* **Framework:** Streamlit
-
-* **Libraries:**
-
-  * Pandas
-  * Scikit-learn
-  * Matplotlib
-  * Seaborn
-
-* **Model:** Random Forest Classifier
-
----
-
-## ⚙️ Methodology
-
-### 1. Dataset Generation
-
-* Synthetic DNA sequences are generated for training (except species mode)
-* Balanced datasets used for better classification
+  * K-mer size
+  * Dataset size
+  * GC sensitivity threshold
 
 ---
 
-### 2. Feature Engineering
+## 🧪 Technologies Used
 
-* DNA sequences converted into **k-mers (substrings of length 3)**
-* Vectorized using **CountVectorizer**
-
----
-
-### 3. Model Training
-
-* Train-test split with stratification
-* Random Forest classifier trained on k-mer features
+* **Python**
+* **Streamlit**
+* **Scikit-learn**
+* **Pandas & NumPy**
+* **Matplotlib & Seaborn**
 
 ---
 
-### 4. Prediction
+## 📁 Dataset
 
-* User input sequence is transformed into k-mers
-* Model predicts classification based on trained patterns
+### Synthetic Data
 
----
+Generated dynamically using:
 
-### 5. Biological Analysis (Input-Based)
+* Random nucleotide sequences
+* Controlled GC distribution
+* Embedded promoter motifs
 
-#### 🧬 GC Content
+### Real Data
 
-* Measures stability of DNA sequence
-* Higher GC → more stable structure
+FASTA-based genomic sequences:
 
-#### 🧬 Base Composition
-
-* Displays counts of A, T, G, C in the input sequence
-
-#### 🧬 Promoter Detection (Improved Logic)
-
-* Uses motif-based scoring:
-
-  * TATA (weight 3)
-  * CAAT (weight 2)
-  * TTGACA (weight 3)
-* Produces a **Promoter Likelihood (%)**
-
-#### 🧬 Species Similarity
-
-* Uses model probability outputs
-* Displays similarity percentage across species
+* Human
+* Chimpanzee
+* Mouse
+* Macaque
 
 ---
 
-## 📊 Results
+## 🧠 How It Works
 
-* High accuracy achieved on synthetic datasets
-* Balanced training improves classification stability
-* Real-time visualizations provide intuitive biological insights
-* Model predictions align with nucleotide composition patterns
+1. DNA sequences are broken into **k-mers** (substrings of length k)
+2. K-mers are vectorized using **CountVectorizer**
+3. A **Random Forest classifier** learns patterns in sequence distribution
+4. Predictions are made with:
 
-> ⚠️ Note: Synthetic datasets are used for training in some modes, so real-world accuracy may vary.
-
----
-
-## 🧪 Sample Input
-
-```
-ATGCGTACGTTAGC
-```
-
-### Output:
-
-* Prediction: **G-Rich Sequence**
-* GC Content: ~60%
-* Visual graphs showing composition and classification
+   * Class label
+   * Probability/confidence score
+5. Additional insights are generated using biological heuristics
 
 ---
 
-## 🌐 Live Demo
+## 📊 Example Outputs
 
-👉 *(Add your Streamlit deployment link here)*
-
----
-
-## 💡 Future Improvements
-
-* 🔬 Integration with larger real-world genomic datasets (NCBI)
-* 🤖 Deep learning models (CNN/RNN for sequence analysis)
-* 🧬 Expanded species classification
-* 📊 Advanced biological feature extraction
-* 🎨 Enhanced UI/UX design
+* DNA Composition Graph
+* GC Content Distribution
+* Confusion Matrix
+* ROC Curve
+* Feature Importance Visualization
 
 ---
 
-## 👩‍💻 Authors
+## ⚠️ Limitations
+
+* Synthetic dataset may not fully represent biological complexity
+* Small datasets can affect:
+
+  * Cross-validation reliability
+  * ROC curve generation
+* Model performance depends on parameter tuning
+
+---
+
+## 🚀 Future Improvements
+
+* Deep Learning models (CNN/RNN for sequence analysis)
+* Larger real-world genomic datasets
+* Advanced motif detection
+* API integration for external datasets
+* Deployment with user authentication
+
+---
+
+## 👩‍💻 Developers
 
 * **Bristi Sen**
 * **Sambriddhi Debnath**
@@ -179,8 +145,39 @@ ATGCGTACGTTAGC
 
 ---
 
-## 🏁 Conclusion
+## 💅 Connect With Me
 
-This project demonstrates how Machine Learning can be applied to DNA sequence analysis while combining computational techniques with biological interpretation. It serves as a strong foundation for more advanced genomic prediction systems.
+* 🔗 [LinkedIn](https://www.linkedin.com/in/bristi-sen-709548311/)
+* 💻 [GitHub](https://github.com/BristiSen)
 
 ---
+
+## ⭐ Why This Project Matters
+
+This project demonstrates:
+
+* Application of machine learning in **bioinformatics**
+* Ability to build **end-to-end data science systems**
+* Strong focus on **interpretability and user experience**
+* Integration of **domain knowledge with AI**
+
+---
+
+## 📌 How to Run
+
+```bash
+git clone https://github.com/BristiSen/DNA-Sequence-Classifier.git
+cd dna-classification
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+---
+
+## 🧬 Final Note
+
+This project is a step toward bridging **biology and artificial intelligence**, showing how computational tools can assist in understanding complex biological patterns.
+
+---
+
+⭐ If you found this interesting, feel free to star the repo!
