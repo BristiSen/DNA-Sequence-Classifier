@@ -4,11 +4,16 @@ import random
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, roc_curve, auc
+from sklearn.preprocessing import label_binarize
+from sklearn.model_selection import cross_val_score
+
 
 # ================== 🔥 AESTHETIC ENHANCEMENTS ==================
 st.markdown("## ✨ Welcome to your DNA Intelligence Lab")
@@ -202,13 +207,36 @@ elif accuracy > 0.75:
 else:
     st.warning("Model may need improvement ⚠️")
 
+# ================== 🔥 CLASSIFICATION REPORT ==================
+st.subheader("📊 Detailed Classification Metrics")
+
+report = classification_report(y_test, y_pred, output_dict=True)
+report_df = pd.DataFrame(report).transpose()
+
+st.dataframe(report_df.style.format("{:.2f}"))
+
 # 🔥 NEW: CLASS DISTRIBUTION
 st.subheader("📊 Training Data Distribution")
 fig_dist, ax_dist = plt.subplots()
 sns.countplot(x=df['label'], ax=ax_dist)
 st.pyplot(fig_dist)
 
-st.divider()
+# ================== 🔥 CROSS VALIDATION ==================
+st.subheader("🔁 Cross-Validation Score")
+
+try:
+    min_class_size = y.value_counts().min()
+    cv_folds = min(5, min_class_size)
+
+    if cv_folds < 2:
+        st.warning("Not enough data for cross-validation.")
+    else:
+        cv_scores = cross_val_score(model, X, y, cv=cv_folds)
+        st.write(f"Mean CV Score: **{cv_scores.mean():.2f}**")
+        st.write(f"Score Variability: ±{cv_scores.std():.2f}")
+
+except Exception as e:
+    st.warning("Cross-validation could not be computed for this dataset.")
 
 # ------------------ INPUT ------------------
 
@@ -311,6 +339,18 @@ if prediction:
     for f, val in top_features:
         st.write(f"• {f} → {round(val,4)}")
 
+# ================== 🔥 FEATURE IMPORTANCE GRAPH ==================
+if prediction:
+    st.subheader("📊 Top Feature Importance (Visual)")
+
+    top_features_df = pd.DataFrame(top_features, columns=["Feature", "Importance"])
+
+    fig_imp, ax_imp = plt.subplots()
+    ax_imp.barh(top_features_df["Feature"], top_features_df["Importance"])
+    ax_imp.invert_yaxis()
+
+    st.pyplot(fig_imp)
+
 # ------------------ MUTATION ------------------
 
 if user_input:
@@ -346,6 +386,13 @@ if user_input:
         st.write("Low GC → More flexible DNA")
     else:
         st.write("Moderate GC → Balanced structure")
+
+# ================== 🔥 DATASET SUMMARY ==================
+st.subheader("📦 Dataset Summary")
+
+col1, col2 = st.columns(2)
+col1.metric("Total Samples", len(df))
+col2.metric("Unique Classes", len(df['label'].unique()))
 
 # ------------------ ORIGINAL GRAPHS (ALL KEPT) ------------------
 
@@ -406,6 +453,41 @@ ax2.set_xlabel("Predicted")
 ax2.set_ylabel("Actual")
 
 st.pyplot(fig2)
+
+# ================== 🔥 ERROR ANALYSIS ==================
+st.subheader("⚠️ Error Analysis")
+
+errors = y_test != y_pred
+error_count = errors.sum()
+
+st.write(f"Misclassified Samples: **{error_count}**")
+
+if error_count > 0:
+    st.write("Model struggles with borderline or ambiguous sequences.")
+
+# ================== 🔥 ROC CURVE ==================
+st.subheader("📈 ROC Curve (Model Discrimination)")
+
+try:
+    y_bin = label_binarize(y_test, classes=model.classes_)
+    y_score = model.predict_proba(X_test)
+
+    fig_roc, ax_roc = plt.subplots()
+
+    for i in range(len(model.classes_)):
+        fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
+        roc_auc = auc(fpr, tpr)
+        ax_roc.plot(fpr, tpr, label=f"{model.classes_[i]} (AUC={roc_auc:.2f})")
+
+    ax_roc.plot([0,1], [0,1], linestyle='--')
+    ax_roc.legend()
+    ax_roc.set_xlabel("False Positive Rate")
+    ax_roc.set_ylabel("True Positive Rate")
+
+    st.pyplot(fig_roc)
+
+except:
+    st.info("ROC Curve not available for this configuration.")
 
 # ------------------ DOWNLOAD ------------------
 
