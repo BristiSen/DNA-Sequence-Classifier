@@ -1,5 +1,3 @@
-#Hello there# 
-
 # 🧬 DNA Sequence Classification System
 
 ### 🚀 Bioinformatics meets Machine Learning
