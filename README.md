@@ -2,153 +2,176 @@
 
 ### 🚀 Bioinformatics meets Machine Learning
 
-An interactive web application that classifies DNA sequences using machine learning techniques, combining biological insights with computational intelligence.
+An interactive, research-oriented web application for DNA sequence classification, combining computational intelligence with biological insight.
+
+🔗 **Live App:**  
+👉 https://dna-sequence-classifier-h2rdkshdw6ux49fj4dn5uv.streamlit.app/
 
 ---
 
 ## ✨ Overview
 
-This project is a **DNA sequence analysis platform** built using **Streamlit and Scikit-learn**, designed to:
+This project presents a **machine learning-based DNA sequence analysis platform** built using **Streamlit and Scikit-learn**, designed to explore how computational models can identify patterns in genomic data.
 
-* Classify DNA sequences based on:
+The system supports multiple classification tasks:
 
-  * 🧪 **G vs C content dominance**
-  * 🧬 **Promoter vs Non-promoter regions**
-  * 🌍 **Species classification using real genomic data**
-* Provide **interpretability and biological insights**
-* Enable **interactive experimentation** with sequence data
+- 🧪 **G vs C Content Classification**
+- 🧬 **Promoter vs Non-Promoter Detection**
+- 🌍 **Species Classification using Real Genomic Data**
+
+Beyond prediction, the application emphasizes **interpretability, biological reasoning, and comparative model evaluation**, making it both a practical tool and a learning framework.
 
 ---
 
 ## 🎯 Key Features
 
-### 🔬 Machine Learning Capabilities
+### 🔬 Machine Learning Pipeline
 
-* K-mer based feature extraction
-* Random Forest Classification
-* Stratified train-test splitting
-* Class balancing for fair learning
+- K-mer based feature extraction (sequence → numerical representation)
+- Multiple classification models:
+  - 🌲 Random Forest (primary model)
+  - 📈 Logistic Regression (baseline)
+  - 📊 Naive Bayes (baseline)
+- Stratified train-test splitting
+- Class balancing for fair model training
 
-### 📊 Model Evaluation
+---
 
-* Accuracy metrics
-* Confusion Matrix (with labels)
-* Classification Report (precision, recall, F1-score)
-* Cross-validation with dynamic fold selection
-* ROC Curve (where applicable)
+### 📊 Model Evaluation & Validation
 
-### 🧠 Interpretability
+- Accuracy metrics for all models
+- Model comparison table (research-oriented)
+- Confusion Matrix visualization
+- Classification Report (precision, recall, F1-score)
+- Cross-validation with adaptive fold selection
+- ROC Curve for multi-class evaluation
 
-* Top feature importance (k-mers driving predictions)
-* Confidence score for predictions
-* Error analysis (misclassified samples)
+---
+
+### 🧠 Interpretability & Explainability
+
+- Feature importance (top k-mers driving predictions)
+- Confidence scores for predictions
+- Error analysis (misclassified samples)
+- Biological interpretation of learned patterns
+
+---
 
 ### 🧬 Biological Insights
 
-* GC content analysis
-* Promoter motif detection (TATA, CAAT, TTGACA)
-* DNA stability interpretation
+- GC content analysis (DNA stability indicator)
+- Promoter motif detection:
+  - TATA box
+  - CAAT box
+  - TTGACA sequence
+- Evolutionary interpretation in species classification:
+  - Highlights similarity between closely related species (e.g., Human vs Chimpanzee)
 
-### ⚡ Interactive UI
+---
 
-* Upload FASTA or text sequences
-* Batch prediction support
-* Sequence mutation simulation
-* Adjustable parameters:
+### ⚡ Interactive User Experience
 
-  * K-mer size
-  * Dataset size
-  * GC sensitivity threshold
+- Upload DNA sequences (FASTA / TXT)
+- Manual sequence input
+- Batch prediction mode
+- Mutation simulation tool 🧪
+- Adjustable parameters:
+  - K-mer size
+  - Dataset size
+  - GC sensitivity threshold
 
 ---
 
 ## 🧪 Technologies Used
 
-* **Python**
-* **Streamlit**
-* **Scikit-learn**
-* **Pandas & NumPy**
-* **Matplotlib & Seaborn**
+- **Python**
+- **Streamlit**
+- **Scikit-learn**
+- **Pandas & NumPy**
+- **Matplotlib & Seaborn**
 
 ---
 
 ## 📁 Dataset
 
-### Synthetic Data
+### Synthetic Dataset
 
 Generated dynamically using:
 
-* Random nucleotide sequences
-* Controlled GC distribution
-* Embedded promoter motifs
-
-### Real Data
-
-FASTA-based genomic sequences:
-
-* Human
-* Chimpanzee
-* Mouse
-* Macaque
+- Random nucleotide sequences (A, T, G, C)
+- Controlled GC distribution
+- Embedded biological motifs
 
 ---
 
-## 🧠 How It Works
+### Real Dataset
 
-1. DNA sequences are broken into **k-mers** (substrings of length k)
-2. K-mers are vectorized using **CountVectorizer**
-3. A **Random Forest classifier** learns patterns in sequence distribution
-4. Predictions are made with:
+FASTA-based genomic sequences:
 
-   * Class label
-   * Probability/confidence score
-5. Additional insights are generated using biological heuristics
+- Human
+- Chimpanzee
+- Mouse
+- Macaque
+
+Sequences are segmented and processed for classification tasks.
+
+---
+
+## 🧠 Methodology
+
+1. DNA sequences are segmented into **k-mers (substrings of length k)**
+2. K-mers are treated like "words" and vectorized using **CountVectorizer**
+3. Machine learning models learn patterns in k-mer distributions
+4. Predictions are generated along with:
+   - Confidence scores
+   - Biological insights
+5. Model performance is validated using multiple evaluation metrics
 
 ---
 
 ## 📊 Example Outputs
 
-* DNA Composition Graph
-* GC Content Distribution
-* Confusion Matrix
-* ROC Curve
-* Feature Importance Visualization
+- DNA Base Composition Graph
+- GC Content Distribution
+- Confusion Matrix
+- ROC Curve
+- Feature Importance Visualization
+- Model Comparison Table
 
 ---
 
 ## ⚠️ Limitations
 
-* Synthetic dataset may not fully represent biological complexity
-* Small datasets can affect:
-
-  * Cross-validation reliability
-  * ROC curve generation
-* Model performance depends on parameter tuning
+- Synthetic data may not fully capture biological complexity
+- Promoter detection is motif-based and not position-aware
+- Limited real-world genomic dataset size
+- Performance depends on parameter tuning and data quality
 
 ---
 
 ## 🚀 Future Improvements
 
-* Deep Learning models (CNN/RNN for sequence analysis)
-* Larger real-world genomic datasets
-* Advanced motif detection
-* API integration for external datasets
-* Deployment with user authentication
+- Deep learning models (CNN, LSTM for sequence learning)
+- Integration with real biological databases (e.g., EPD, NCBI)
+- Position-aware promoter detection
+- Advanced feature engineering (embedding-based methods)
+- API integration for external genomic data
+- Deployment with user authentication and storage
 
 ---
 
 ## 👩‍💻 Developers
 
-* **Bristi Sen**
-* **Sambriddhi Debnath**
-* **Rajjyashree Raychaudhuri**
+- **Bristi Sen**
+- **Sambriddhi Debnath**
+- **Rajjyashree Raychaudhuri**
 
 ---
 
-## 💅 Connect With Me
+## 💅 Connect
 
-* 🔗 [LinkedIn](https://www.linkedin.com/in/bristi-sen-709548311/)
-* 💻 [GitHub](https://github.com/BristiSen)
+- 🔗 LinkedIn: https://www.linkedin.com/in/bristi-sen-709548311/
+- 💻 GitHub: https://github.com/BristiSen
 
 ---
 
@@ -156,28 +179,18 @@ FASTA-based genomic sequences:
 
 This project demonstrates:
 
-* Application of machine learning in **bioinformatics**
-* Ability to build **end-to-end data science systems**
-* Strong focus on **interpretability and user experience**
-* Integration of **domain knowledge with AI**
+- Application of machine learning in **bioinformatics**
+- Development of an **end-to-end ML system**
+- Emphasis on **interpretability and explainability**
+- Integration of **biological knowledge with AI models**
+- Comparative evaluation of multiple ML approaches
 
 ---
 
-## 📌 How to Run
+## 📌 How to Run Locally
 
 ```bash
 git clone https://github.com/BristiSen/DNA-Sequence-Classifier.git
 cd dna-classification
 pip install -r requirements.txt
 streamlit run app.py
-```
-
----
-
-## 🧬 Final Note
-
-This project is a step toward bridging **biology and artificial intelligence**, showing how computational tools can assist in understanding complex biological patterns.
-
----
-
-⭐ If you found this interesting, feel free to star the repo!
