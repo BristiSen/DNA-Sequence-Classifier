@@ -6,6 +6,8 @@ import seaborn as sns
 import os
 import numpy as np
 
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import accuracy_score, confusion_matrix
@@ -133,7 +135,8 @@ else:
             else:
                 continue
         else:
-            label = "Promoter" if "TATA" in seq else "Non-Promoter"
+            motifs = ["TATA", "CAAT", "TTGACA"]
+            label = "Promoter" if any(m in seq for m in motifs) else "Non-Promoter"
 
         data.append([seq, label])
 
@@ -191,6 +194,21 @@ model = RandomForestClassifier(
 
 model.fit(X_train, y_train)
 
+# ================== 🔥 BASELINE MODELS ==================
+
+baseline_models = {
+    "Logistic Regression": LogisticRegression(max_iter=1000),
+    "Naive Bayes": MultinomialNB()
+}
+
+baseline_results = {}
+
+for name, mdl in baseline_models.items():
+    mdl.fit(X_train, y_train)
+    pred = mdl.predict(X_test)
+    acc = accuracy_score(y_test, pred)
+    baseline_results[name] = acc
+
 # ------------------ EVAL ------------------
 
 y_pred = model.predict(X_test)
@@ -206,6 +224,17 @@ elif accuracy > 0.75:
     st.info("Model performance is decent 👍")
 else:
     st.warning("Model may need improvement ⚠️")
+
+# ================== 🔥 MODEL COMPARISON ==================
+
+st.subheader("📊 Model Comparison")
+
+comparison_df = pd.DataFrame({
+    "Model": ["Random Forest"] + list(baseline_results.keys()),
+    "Accuracy": [accuracy] + list(baseline_results.values())
+})
+
+st.dataframe(comparison_df.style.format({"Accuracy": "{:.2f}"}))
 
 # ================== 🔥 CLASSIFICATION REPORT ==================
 st.subheader("📊 Detailed Classification Metrics")
@@ -324,6 +353,12 @@ The model compares your sequence with **real genomic data** from:
 
 Using k-mer similarity patterns.
         """)
+        st.write("""
+💡 **Biological Insight:**
+
+Closely related species (e.g., Human and Chimpanzee) often show similar k-mer patterns.
+Misclassifications between such species may reflect evolutionary similarity rather than model error.
+""")
 
 # ------------------ EXPLAINABILITY ------------------
 
@@ -338,6 +373,10 @@ if prediction:
 
     for f, val in top_features:
         st.write(f"• {f} → {round(val,4)}")
+        st.write("""
+        💡 These k-mers may represent biologically significant sequence patterns.
+        For example, GC-rich k-mers often indicate structurally stable regions of DNA.
+        """)
 
 # ================== 🔥 FEATURE IMPORTANCE GRAPH ==================
 if prediction:
@@ -501,6 +540,17 @@ if prediction:
     st.download_button("📥 Download Results",
                        df_download.to_csv(index=False),
                        "dna_result.csv")
+    
+# ================== 🔥 DOWNLOAD FULL REPORT ==================
+
+full_results = comparison_df.copy()
+full_results["Dataset Size"] = len(df)
+
+st.download_button(
+    "📥 Download Full Model Comparison",
+    full_results.to_csv(index=False),
+    "model_comparison.csv"
+)
 
 # ------------------ FOOTER ------------------
 st.markdown("---")
