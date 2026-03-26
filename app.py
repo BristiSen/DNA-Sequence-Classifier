@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_curve, auc
 from sklearn.preprocessing import label_binarize
 from sklearn.model_selection import cross_val_score
-
+from scipy.sparse import hstack
 
 # ================== 🔥 AESTHETIC ENHANCEMENTS ==================
 st.markdown("## ✨ Welcome to your DNA Intelligence Lab")
@@ -76,6 +76,8 @@ def generate_sequence(length=60):
     return ''.join(random.choices(['A','T','G','C'], k=length))
 
 def gc_content(seq):
+    if len(seq) == 0:
+        return 0
     return (seq.count('G') + seq.count('C')) / len(seq)
 
 def get_kmers(sequence, k=3):
@@ -84,6 +86,10 @@ def get_kmers(sequence, k=3):
 def mutate(seq, rate=0.1):
     bases = ['A','T','G','C']
     return ''.join([random.choice(bases) if random.random()<rate else c for c in seq])
+
+def clean_sequence(seq):
+    seq = seq.upper()
+    return ''.join([c for c in seq if c in "ATGC"])
 
 # ================== 🔥 LAB FUNCTIONS ==================
 
@@ -99,19 +105,47 @@ def find_motif_positions(seq, motif):
             positions.append(i)
     return positions
 
-def simple_alignment(seq1, seq2):
+def needleman_wunsch(seq1, seq2, match=1, mismatch=-1, gap=-2):
+    n, m = len(seq1), len(seq2)
+
+    score = np.zeros((n+1, m+1))
+
+    for i in range(n+1):
+        score[i][0] = i * gap
+    for j in range(m+1):
+        score[0][j] = j * gap
+
+    for i in range(1, n+1):
+        for j in range(1, m+1):
+            diag = score[i-1][j-1] + (match if seq1[i-1] == seq2[j-1] else mismatch)
+            delete = score[i-1][j] + gap
+            insert = score[i][j-1] + gap
+            score[i][j] = max(diag, delete, insert)
+
     align1, align2 = "", ""
-    score = 0
+    i, j = n, m
 
-    for a, b in zip(seq1, seq2):
-        align1 += a
-        align2 += b
-        if a == b:
-            score += 1
+    while i > 0 and j > 0:
+        current = score[i][j]
+        diag = score[i-1][j-1]
+        up = score[i-1][j]
+        left = score[i][j-1]
+
+        if current == diag + (match if seq1[i-1] == seq2[j-1] else mismatch):
+            align1 = seq1[i-1] + align1
+            align2 = seq2[j-1] + align2
+            i -= 1
+            j -= 1
+        elif current == up + gap:
+            align1 = seq1[i-1] + align1
+            align2 = "-" + align2
+            i -= 1
         else:
-            score -= 1
+            align1 = "-" + align1
+            align2 = seq2[j-1] + align2
+            j -= 1
 
-    return align1, align2, score
+    return align1, align2, score[n][m]
 
 def restriction_sites(seq):
     enzymes = {
@@ -128,8 +162,21 @@ def restriction_sites(seq):
 
     return results
 
-def generate_primer(seq, length=20):
-    return seq[:length], seq[-length:]
+def melting_temp(seq):
+    return 2*(seq.count('A')+seq.count('T')) + 4*(seq.count('G')+seq.count('C'))
+
+def generate_primer_advanced(seq, length=20):
+    fwd = seq[:length]
+    rev = seq[-length:]
+
+    return {
+        "Forward": fwd,
+        "Forward GC%": round(gc_content(fwd)*100, 2),
+        "Forward Tm": melting_temp(fwd),
+        "Reverse": rev,
+        "Reverse GC%": round(gc_content(rev)*100, 2),
+        "Reverse Tm": melting_temp(rev)
+    }
 
 def gc_window(seq, window=20):
     values = []
@@ -137,6 +184,24 @@ def gc_window(seq, window=20):
         sub = seq[i:i+window]
         values.append(gc_content(sub))
     return values
+
+PROMOTER_DB = {
+                "Eukaryotic": ["TATAAA", "CAAT"],
+                "Prokaryotic": ["TTGACA", "TATAAT"]
+            }
+
+def detect_promoter_simple(seq):
+    score = 0
+
+    for motifs in PROMOTER_DB.values():
+        for m in motifs:
+            if m in seq:
+                score += len(m)
+
+    if score >= 6:
+        return "Promoter"
+    else:
+        return "Non-Promoter"
 
 # ------------------ FASTA LOADER ------------------
 
@@ -199,9 +264,7 @@ else:
             else:
                 continue
         else:
-            motifs = ["TATA", "CAAT", "TTGACA"]
-            label = "Promoter" if any(m in seq for m in motifs) else "Non-Promoter"
-
+            label = detect_promoter_simple(seq)
         data.append([seq, label])
 
     df = pd.DataFrame(data, columns=["sequence", "label"])
@@ -232,7 +295,10 @@ df["gc_content"] = df["sequence"].apply(gc_content)
 df["kmers"] = df["sequence"].apply(lambda x: ' '.join(get_kmers(x, k_value)))
 
 vectorizer = CountVectorizer()
-X = vectorizer.fit_transform(df["kmers"])
+X_kmer = vectorizer.fit_transform(df["kmers"])
+X_gc = df["gc_content"].values.reshape(-1, 1)
+
+X = hstack([X_kmer, X_gc])
 y = df["label"]
 
 num_classes = len(y.unique())
@@ -383,8 +449,8 @@ if lab_mode == "🧪 Experimental Lab":
         seq2_align = st.text_input("Enter Sequence 2")
 
         if st.button("Align Sequences"):
-            if seq1 and seq2:
-                a1, a2, score = simple_alignment(seq1.upper(), seq2.upper())
+            if seq1_align and seq2_align:
+                a1, a2, score = needleman_wunsch(seq1_align.upper(), seq2_align.upper())
 
                 st.text(a1)
                 st.text(a2)
@@ -407,28 +473,33 @@ if lab_mode == "🧪 Experimental Lab":
 
         if st.button("Generate Primers"):
             if seq:
-                fwd, rev = generate_primer(seq.upper())
+                primers = generate_primer_advanced(seq.upper())
 
-                st.write(f"Forward Primer: {fwd}")
-                st.write(f"Reverse Primer: {rev}")
+                for k, v in primers.items():
+                    st.write(f"{k}: {v}")
+
+                #st.write(f"Forward Primer: {fwd}")
+                #st.write(f"Reverse Primer: {rev}")
 
     elif mode == "GC Window Analysis":
 
         seq = st.text_input("Enter DNA Sequence")
+        window_size = st.slider("Window Size", 10, 50, 20)
 
         if st.button("Analyze GC Distribution"):
             if seq:
-                values = gc_window(seq.upper())
+                if len(seq) < window_size:
+                    st.error("Sequence length must be greater than window size 😭")
+                else:
+                    values = gc_window(seq.upper(), window=window_size)
 
-                fig, ax = plt.subplots()
-                ax.plot(values)
-                ax.set_title("GC Content Across Sequence")
-                ax.set_xlabel("Position")
-                ax.set_ylabel("GC Ratio")
+                    fig, ax = plt.subplots()
+                    ax.plot(values)
+                    ax.set_title("GC Content Across Sequence")
+                    ax.set_xlabel("Position")
+                    ax.set_ylabel("GC Ratio")
 
-                st.pyplot(fig)
-        window_size = st.slider("Window Size", 10, 50, 20)
-        values = gc_window(seq.upper(), window=window_size)
+                    st.pyplot(fig)
     
     st.stop()
 # ------------------ INPUT ------------------
@@ -454,10 +525,18 @@ if st.button("Predict"):
         lines = uploaded_file.read().decode("utf-8").split("\n")
         user_input = ''.join([l.strip() for l in lines if not l.startswith(">")])
 
+    user_input = clean_sequence(user_input)
     if user_input and all(c in "ATGC" for c in user_input):
 
         kmers = ' '.join(get_kmers(user_input, k_value))
-        vector = vectorizer.transform([kmers])
+        vector_kmer = vectorizer.transform([kmers])
+
+        gc_ratio = gc_content(user_input)  # 0–1
+        vector_gc = np.array([[gc_ratio]])
+
+        vector = hstack([vector_kmer, vector_gc])
+
+        gc_val = gc_ratio * 100  # for display
 
         prediction = model.predict(vector)[0]
         prob_vals = model.predict_proba(vector)[0]
@@ -465,8 +544,6 @@ if st.button("Predict"):
 
         if mode == "Species Classification (Real Data)":
             probs = prob_vals
-
-        gc_val = gc_content(user_input)*100
 
         col1, col2, col3 = st.columns(3)
         col1.metric("Prediction", prediction)
@@ -530,17 +607,33 @@ if prediction:
     st.subheader("🔍 Why this prediction?")
 
     feature_names = vectorizer.get_feature_names_out()
-    importances = model.feature_importances_
+    if hasattr(model, "feature_importances_"):
+        importances = model.feature_importances_
+    else:
+        importances = np.zeros(len(feature_names))
 
     top_features = sorted(zip(feature_names, importances),
                           key=lambda x: x[1], reverse=True)[:5]
 
+    def highlight_kmers(seq, kmers):
+        highlighted = seq
+        for k in kmers:
+            if k in highlighted:
+                highlighted = highlighted.replace(k, f"[{k}]")
+        return highlighted
+
+    important_kmers = [f for f, _ in top_features]
+    highlighted_seq = highlight_kmers(user_input.upper(), important_kmers)
+
+    st.subheader("🧬 Important Sequence Regions")
+    st.code(highlighted_seq)
+
     for f, val in top_features:
         st.write(f"• {f} → {round(val,4)}")
-        st.write("""
-        💡 These k-mers may represent biologically significant sequence patterns.
-        For example, GC-rich k-mers often indicate structurally stable regions of DNA.
-        """)
+        st.write("💡 These k-mers may indicate biologically meaningful patterns.")
+
+    # ✅ ADD THIS HERE (SAFE ZONE)
+    st.write(f"🧬 GC Content Contribution: {round(gc_content(user_input), 3)}")
 
 # ================== 🔥 FEATURE IMPORTANCE GRAPH ==================
 if prediction:
@@ -553,13 +646,41 @@ if prediction:
     ax_imp.invert_yaxis()
 
     st.pyplot(fig_imp)
-
+    
 # ------------------ MUTATION ------------------
 
-if user_input:
-    if st.button("🧪 Mutate Sequence"):
+if user_input and all(c in "ATGC" for c in user_input):
+    if st.button("🧪 Mutate & Analyze Impact"):
+
         mutated = mutate(user_input)
+
+        # ORIGINAL PREDICTION
+        kmers_orig = ' '.join(get_kmers(user_input, k_value))
+        vec_kmer_orig = vectorizer.transform([kmers_orig])
+        gc_orig = gc_content(user_input)
+        vec_orig = hstack([vec_kmer_orig, np.array([[gc_orig]])])
+
+        pred_orig = model.predict(vec_orig)[0]
+
+        # MUTATED PREDICTION
+        kmers_mut = ' '.join(get_kmers(mutated, k_value))
+        vec_kmer_mut = vectorizer.transform([kmers_mut])
+        gc_mut = gc_content(mutated)
+        vec_mut = hstack([vec_kmer_mut, np.array([[gc_mut]])])
+
+        pred_mut = model.predict(vec_mut)[0]
+
+        st.write("Original:", user_input)
         st.write("Mutated:", mutated)
+
+        col1, col2 = st.columns(2)
+        col1.metric("Original Prediction", pred_orig)
+        col2.metric("Mutated Prediction", pred_mut)
+
+        if pred_orig != pred_mut:
+            st.warning("⚠️ Mutation changed classification!")
+        else:
+            st.success("Mutation did not affect classification")
 
 # ================== BATCH ==================
 if multi_input:
@@ -570,7 +691,11 @@ if multi_input:
         seq = seq.strip().upper()
         if seq and all(c in "ATGC" for c in seq):
             kmers = ' '.join(get_kmers(seq, k_value))
-            vector = vectorizer.transform([kmers])
+            vector_kmer = vectorizer.transform([kmers])
+            gc_ratio = gc_content(seq)
+            vector_gc = np.array([[gc_ratio]])
+
+            vector = hstack([vector_kmer, vector_gc])
             pred = model.predict(vector)[0]
             results.append({"Sequence": seq[:20]+"...", "Prediction": pred})
 
@@ -581,11 +706,11 @@ if multi_input:
 if user_input:
     st.subheader("🧠 Biological Insight")
 
-    gc_val = gc_content(user_input)*100
+    gc_val_local = gc_content(user_input) * 100
 
-    if gc_val > 60:
+    if gc_val_local > 60:
         st.write("High GC → More stable DNA structure 🧬")
-    elif gc_val < 40:
+    elif gc_val_local < 40:
         st.write("Low GC → More flexible DNA")
     else:
         st.write("Moderate GC → Balanced structure")
