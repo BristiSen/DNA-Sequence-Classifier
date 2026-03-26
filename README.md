@@ -1,10 +1,10 @@
 # 🧬 DNA Sequence Classification System
 
-### 🚀 Bioinformatics meets Machine Learning
+### 🚀 Hybrid Bioinformatics + Machine Learning System for DNA Intelligence
 
 An interactive, research-oriented web application for DNA sequence classification, combining computational intelligence with biological insight.
 
-🔗 **Live App:**  
+🔗 **Live App:**
 👉 https://dna-sequence-classifier-h2rdkshdw6ux49fj4dn5uv.streamlit.app/
 
 ---
@@ -15,11 +15,11 @@ This project presents a **machine learning-based DNA sequence analysis platform*
 
 The system supports multiple classification tasks:
 
-- 🧪 **G vs C Content Classification**
-- 🧬 **Promoter vs Non-Promoter Detection**
-- 🌍 **Species Classification using Real Genomic Data**
+* 🧪 **G vs C Content Classification**
+* 🧬 **Promoter vs Non-Promoter Detection**
+* 🌍 **Species Classification using Real Genomic Data**
 
-Beyond prediction, the application emphasizes **interpretability, biological reasoning, and comparative model evaluation**, making it both a practical tool and a learning framework.
+💡 This system goes beyond static classification by enabling **mutation impact analysis, sequence-level experimentation, and interpretable biological insights**, bridging the gap between computational models and real-world bioinformatics workflows.
 
 ---
 
@@ -27,68 +27,86 @@ Beyond prediction, the application emphasizes **interpretability, biological rea
 
 ### 🔬 Machine Learning Pipeline
 
-- K-mer based feature extraction (sequence → numerical representation)
-- Multiple classification models:
-  - 🌲 Random Forest (primary model)
-  - 📈 Logistic Regression (baseline)
-  - 📊 Naive Bayes (baseline)
-- Stratified train-test splitting
-- Class balancing for fair model training
+* K-mer based feature extraction (sequence → numerical representation)
+* Hybrid feature engineering: **k-mer frequency + GC content integration**
+* Multiple classification models:
+
+  * 🌲 Random Forest (primary model)
+  * 📈 Logistic Regression (baseline)
+  * 📊 Naive Bayes (baseline)
+* Stratified train-test splitting
+* Class balancing for fair model training
 
 ---
 
 ### 📊 Model Evaluation & Validation
 
-- Accuracy metrics for all models
-- Model comparison table (research-oriented)
-- Confusion Matrix visualization
-- Classification Report (precision, recall, F1-score)
-- Cross-validation with adaptive fold selection
-- ROC Curve for multi-class evaluation
+* Accuracy metrics for all models
+* Model comparison table (research-oriented)
+* Confusion Matrix visualization
+* Classification Report (precision, recall, F1-score)
+* Cross-validation with adaptive fold selection
+* ROC Curve for multi-class evaluation
 
 ---
 
 ### 🧠 Interpretability & Explainability
 
-- Feature importance (top k-mers driving predictions)
-- Confidence scores for predictions
-- Error analysis (misclassified samples)
-- Biological interpretation of learned patterns
+* Feature importance (top k-mers driving predictions)
+* Confidence scores for predictions
+* Error analysis (misclassified samples)
+* GC content contribution to predictions
+* Biological interpretation of learned patterns
 
 ---
 
 ### 🧬 Biological Insights
 
-- GC content analysis (DNA stability indicator)
-- Promoter motif detection:
-  - TATA box
-  - CAAT box
-  - TTGACA sequence
-- Evolutionary interpretation in species classification:
-  - Highlights similarity between closely related species (e.g., Human vs Chimpanzee)
+* GC content analysis (DNA stability indicator)
+* Promoter motif detection:
+
+  * TATA box
+  * CAAT box
+  * TTGACA sequence
+* Evolutionary interpretation in species classification
+* Sequence-level pattern recognition using k-mer distributions
 
 ---
 
 ### ⚡ Interactive User Experience
 
-- Upload DNA sequences (FASTA / TXT)
-- Manual sequence input
-- Batch prediction mode
-- Mutation simulation tool 🧪
-- Adjustable parameters:
-  - K-mer size
-  - Dataset size
-  - GC sensitivity threshold
+* Upload DNA sequences (FASTA / TXT)
+* Manual sequence input
+* Batch prediction mode
+* Adjustable parameters:
+
+  * K-mer size
+  * Dataset size
+  * GC sensitivity threshold
+
+---
+
+### 🧪 Experimental Bioinformatics Tools
+
+The system includes an experimental lab for sequence-level analysis:
+
+* 🔍 Sequence similarity comparison
+* 🧬 Motif detection and localization
+* 🧪 Mutation simulation with classification impact analysis
+* 🧵 Global sequence alignment (Needleman-Wunsch)
+* ✂️ Restriction enzyme site identification
+* 🧫 Primer design with GC% and melting temperature
+* 📈 GC window analysis (local stability profiling)
 
 ---
 
 ## 🧪 Technologies Used
 
-- **Python**
-- **Streamlit**
-- **Scikit-learn**
-- **Pandas & NumPy**
-- **Matplotlib & Seaborn**
+* **Python**
+* **Streamlit**
+* **Scikit-learn**
+* **Pandas & NumPy**
+* **Matplotlib & Seaborn**
 
 ---
 
@@ -98,9 +116,9 @@ Beyond prediction, the application emphasizes **interpretability, biological rea
 
 Generated dynamically using:
 
-- Random nucleotide sequences (A, T, G, C)
-- Controlled GC distribution
-- Embedded biological motifs
+* Random nucleotide sequences (A, T, G, C)
+* Controlled GC distribution
+* Embedded biological motifs
 
 ---
 
@@ -108,10 +126,10 @@ Generated dynamically using:
 
 FASTA-based genomic sequences:
 
-- Human
-- Chimpanzee
-- Mouse
-- Macaque
+* Human
+* Chimpanzee
+* Mouse
+* Macaque
 
 Sequences are segmented and processed for classification tasks.
 
@@ -121,57 +139,60 @@ Sequences are segmented and processed for classification tasks.
 
 1. DNA sequences are segmented into **k-mers (substrings of length k)**
 2. K-mers are treated like "words" and vectorized using **CountVectorizer**
-3. Machine learning models learn patterns in k-mer distributions
-4. Predictions are generated along with:
-   - Confidence scores
-   - Biological insights
-5. Model performance is validated using multiple evaluation metrics
+3. A **hybrid feature vector (k-mer + GC content)** is constructed
+4. Machine learning models learn patterns in sequence composition
+5. Predictions are generated along with:
+
+   * Confidence scores
+   * Biological insights
+6. Model performance is validated using multiple evaluation metrics
 
 ---
 
 ## 📊 Example Outputs
 
-- DNA Base Composition Graph
-- GC Content Distribution
-- Confusion Matrix
-- ROC Curve
-- Feature Importance Visualization
-- Model Comparison Table
+* DNA Base Composition Graph
+* GC Content Distribution
+* Confusion Matrix
+* ROC Curve
+* Feature Importance Visualization
+* Model Comparison Table
+* Mutation Impact Analysis (before vs after mutation)
 
 ---
 
 ## ⚠️ Limitations
 
-- Synthetic data may not fully capture biological complexity
-- Promoter detection is motif-based and not position-aware
-- Limited real-world genomic dataset size
-- Performance depends on parameter tuning and data quality
+* Synthetic data may not fully capture biological complexity
+* Promoter detection is motif-based and not position-aware
+* Limited real-world genomic dataset size
+* Performance depends on parameter tuning and data quality
 
 ---
 
 ## 🚀 Future Improvements
 
-- Deep learning models (CNN, LSTM for sequence learning)
-- Integration with real biological databases (e.g., EPD, NCBI)
-- Position-aware promoter detection
-- Advanced feature engineering (embedding-based methods)
-- API integration for external genomic data
-- Deployment with user authentication and storage
+* Deep learning models (CNN, LSTM for sequence learning)
+* Integration with real biological databases (e.g., EPD, NCBI)
+* Position-aware promoter detection
+* Advanced feature engineering (embedding-based methods)
+* API integration for external genomic data
+* Deployment with user authentication and storage
 
 ---
 
 ## 👩‍💻 Developers
 
-- **Bristi Sen**
-- **Sambriddhi Debnath**
-- **Rajjyashree Raychaudhuri**
+* **Bristi Sen**
+* **Sambriddhi Debnath**
+* **Rajjyashree Raychaudhuri**
 
 ---
 
 ## 💅 Connect
 
-- 🔗 LinkedIn: https://www.linkedin.com/in/bristi-sen-709548311/
-- 💻 GitHub: https://github.com/BristiSen
+* 🔗 LinkedIn: https://www.linkedin.com/in/bristi-sen-709548311/
+* 💻 GitHub: https://github.com/BristiSen
 
 ---
 
@@ -179,11 +200,13 @@ Sequences are segmented and processed for classification tasks.
 
 This project demonstrates:
 
-- Application of machine learning in **bioinformatics**
-- Development of an **end-to-end ML system**
-- Emphasis on **interpretability and explainability**
-- Integration of **biological knowledge with AI models**
-- Comparative evaluation of multiple ML approaches
+* Integration of **machine learning with biological sequence analysis**
+* Development of an **interpretable and interactive bioinformatics system**
+* Use of **hybrid feature engineering (statistical + biological features)**
+* Simulation of **real-world laboratory workflows** (mutation, alignment, primer design)
+* Emphasis on **explainability in biological predictions**
+
+It represents a step toward making **computational genomics more accessible, interactive, and experimentally meaningful**.
 
 ---
 
@@ -192,12 +215,14 @@ This project demonstrates:
 ```bash
 git clone https://github.com/BristiSen/DNA-Sequence-Classifier.git
 cd dna-classification
+pip install -r requirements.txt
+streamlit run app.py
 ```
 
-🧬 Final Note
+---
+
+## 🧬 Final Note
 
 This project is a step toward bridging biology and artificial intelligence, highlighting how computational tools can assist in decoding complex genetic patterns.
 
 ⭐ If you found this interesting, consider starring the repository!
-pip install -r requirements.txt
-streamlit run app.py
