@@ -192,5 +192,12 @@ This project demonstrates:
 ```bash
 git clone https://github.com/BristiSen/DNA-Sequence-Classifier.git
 cd dna-classification
+```
+
+🧬 Final Note
+
+This project is a step toward bridging biology and artificial intelligence, highlighting how computational tools can assist in decoding complex genetic patterns.
+
+⭐ If you found this interesting, consider starring the repository!
 pip install -r requirements.txt
 streamlit run app.py
