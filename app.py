@@ -43,13 +43,24 @@ st.markdown("### Bioinformatics Model for DNA Analysis")
 
 st.divider()
 
-# ------------------ MODE ------------------
+# ================== 🔥 LAB MODE ==================
 
-mode = st.selectbox(
-    "Select Classification Mode",
-    ["G vs C Classification", "Promoter vs Non-Promoter", "Species Classification (Real Data)"]
+lab_mode = st.selectbox(
+    "Select Lab Mode",
+    ["🧬 Classification Lab", "🧪 Experimental Lab"]
 )
 
+if lab_mode == "🧬 Classification Lab":
+    mode = st.selectbox(
+        "Select Classification Mode",
+        ["G vs C Classification", "Promoter vs Non-Promoter", "Species Classification (Real Data)"]
+    )
+else:
+    mode = st.selectbox(
+        "Select Experiment",
+        ["Sequence Similarity", "Motif Finder", "Mutation Playground", "Sequence Alignment","Restriction Site Analysis","Primer Design", 
+ "GC Window Analysis"]
+    )
 # ------------------ DESCRIPTION ------------------
 
 if mode == "G vs C Classification":
@@ -73,6 +84,59 @@ def get_kmers(sequence, k=3):
 def mutate(seq, rate=0.1):
     bases = ['A','T','G','C']
     return ''.join([random.choice(bases) if random.random()<rate else c for c in seq])
+
+# ================== 🔥 LAB FUNCTIONS ==================
+
+def sequence_similarity(seq1, seq2):
+    length = min(len(seq1), len(seq2))
+    matches = sum(c1 == c2 for c1, c2 in zip(seq1[:length], seq2[:length]))
+    return matches / length if length > 0 else 0
+
+def find_motif_positions(seq, motif):
+    positions = []
+    for i in range(len(seq) - len(motif) + 1):
+        if seq[i:i+len(motif)] == motif:
+            positions.append(i)
+    return positions
+
+def simple_alignment(seq1, seq2):
+    align1, align2 = "", ""
+    score = 0
+
+    for a, b in zip(seq1, seq2):
+        align1 += a
+        align2 += b
+        if a == b:
+            score += 1
+        else:
+            score -= 1
+
+    return align1, align2, score
+
+def restriction_sites(seq):
+    enzymes = {
+        "EcoRI": "GAATTC",
+        "BamHI": "GGATCC",
+        "HindIII": "AAGCTT"
+    }
+
+    results = {}
+
+    for name, pattern in enzymes.items():
+        positions = find_motif_positions(seq, pattern)
+        results[name] = positions
+
+    return results
+
+def generate_primer(seq, length=20):
+    return seq[:length], seq[-length:]
+
+def gc_window(seq, window=20):
+    values = []
+    for i in range(len(seq) - window + 1):
+        sub = seq[i:i+window]
+        values.append(gc_content(sub))
+    return values
 
 # ------------------ FASTA LOADER ------------------
 
@@ -267,6 +331,106 @@ try:
 except Exception as e:
     st.warning("Cross-validation could not be computed for this dataset.")
 
+# ================== 🧪 EXPERIMENTAL LAB ==================
+
+if lab_mode == "🧪 Experimental Lab":
+
+    st.subheader("🧪 Experimental DNA Tools")
+
+    if mode == "Sequence Similarity":
+
+        seq1 = st.text_input("Enter Sequence 1")
+        seq2 = st.text_input("Enter Sequence 2")
+
+        if st.button("Compare Sequences"):
+            if seq1 and seq2:
+                similarity = sequence_similarity(seq1.upper(), seq2.upper())
+                st.metric("Similarity Score", f"{similarity*100:.2f}%")
+
+                if similarity > 0.9:
+                    st.success("Highly similar sequences 🧬")
+                elif similarity > 0.6:
+                    st.info("Moderate similarity")
+                else:
+                    st.warning("Low similarity")
+
+    elif mode == "Motif Finder":
+
+        seq = st.text_input("Enter DNA Sequence")
+        motif = st.text_input("Enter Motif (e.g., TATA)")
+
+        if st.button("Find Motif"):
+            if seq and motif:
+                positions = find_motif_positions(seq.upper(), motif.upper())
+
+                if positions:
+                    st.success(f"Motif found at positions: {positions}")
+                else:
+                    st.warning("Motif not found")
+
+    elif mode == "Mutation Playground":
+
+        seq = st.text_input("Enter DNA Sequence")
+
+        if st.button("Mutate Sequence"):
+            if seq:
+                mutated = mutate(seq.upper())
+                st.write("Original:", seq)
+                st.write("Mutated:", mutated)
+
+    elif mode == "Sequence Alignment":
+        seq1_align = st.text_input("Enter Sequence 1")
+        seq2_align = st.text_input("Enter Sequence 2")
+
+        if st.button("Align Sequences"):
+            if seq1 and seq2:
+                a1, a2, score = simple_alignment(seq1.upper(), seq2.upper())
+
+                st.text(a1)
+                st.text(a2)
+                st.metric("Alignment Score", score)
+
+    elif mode == "Restriction Site Analysis":
+
+        seq = st.text_input("Enter DNA Sequence")
+
+        if st.button("Analyze Restriction Sites"):
+            if seq:
+                sites = restriction_sites(seq.upper())
+
+                for enzyme, positions in sites.items():
+                    st.write(f"🔬 {enzyme}: {positions if positions else 'No cut sites'}")
+
+    elif mode == "Primer Design":
+
+        seq = st.text_input("Enter DNA Sequence")
+
+        if st.button("Generate Primers"):
+            if seq:
+                fwd, rev = generate_primer(seq.upper())
+
+                st.write(f"Forward Primer: {fwd}")
+                st.write(f"Reverse Primer: {rev}")
+
+    elif mode == "GC Window Analysis":
+
+        seq = st.text_input("Enter DNA Sequence")
+
+        if st.button("Analyze GC Distribution"):
+            if seq:
+                values = gc_window(seq.upper())
+
+                fig, ax = plt.subplots()
+                ax.plot(values)
+                ax.set_title("GC Content Across Sequence")
+                ax.set_xlabel("Position")
+                ax.set_ylabel("GC Ratio")
+
+                st.pyplot(fig)
+        window_size = st.slider("Window Size", 10, 50, 20)
+        values = gc_window(seq.upper(), window=window_size)
+    
+    st.stop()
 # ------------------ INPUT ------------------
 
 st.subheader("🔬 Test Your DNA Sequence")
