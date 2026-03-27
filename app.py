@@ -16,6 +16,7 @@ from sklearn.metrics import classification_report, roc_curve, auc
 from sklearn.preprocessing import label_binarize
 from sklearn.model_selection import cross_val_score
 from scipy.sparse import hstack
+from catboost import CatBoostClassifier
 
 # ================== 🔥 AESTHETIC ENHANCEMENTS ==================
 st.markdown("## ✨ Welcome to your DNA Intelligence Lab")
@@ -315,12 +316,38 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # ------------------ MODEL ------------------
 
-model = RandomForestClassifier(
-    n_estimators=150,
-    random_state=42,
-    class_weight='balanced',
-    max_depth=10
-)
+if mode == "Species Classification (Real Data)":
+
+    # Convert sparse → dense (CatBoost NEEDS this)
+    X = X.toarray()
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y,
+        test_size=test_size,
+        stratify=y,
+        random_state=42
+    )
+
+    class_counts = y_train.value_counts()
+    total = len(y_train)
+    class_weights = [total / class_counts[c] for c in sorted(y_train.unique())]
+
+    model = CatBoostClassifier(
+        iterations=300,
+        depth=8,
+        learning_rate=0.05,
+        loss_function='MultiClass',
+        verbose=0,
+        class_weights=class_weights
+    )
+
+else:
+    model = RandomForestClassifier(
+        n_estimators=150,
+        random_state=42,
+        class_weight='balanced',
+        max_depth=10
+    )
 
 model.fit(X_train, y_train)
 
@@ -606,7 +633,7 @@ Misclassifications between such species may reflect evolutionary similarity rath
 if prediction:
     st.subheader("🔍 Why this prediction?")
 
-    feature_names = vectorizer.get_feature_names_out()
+    feature_names = list(vectorizer.get_feature_names_out()) + ["gc_content"]
     if hasattr(model, "feature_importances_"):
         importances = model.feature_importances_
     else:
